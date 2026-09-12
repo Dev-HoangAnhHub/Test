@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bầu Cua Tôm Cá</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(ellipse at center, #8b0000 0%, #3a0000 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 700px;
+            background: linear-gradient(145deg, #2a0000, #4a0000);
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 
+                0 0 40px rgba(255, 215, 0, 0.3),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 3px solid #d4af37;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(180deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            letter-spacing: 2px;
+            font-weight: 900;
+        }
+
+        .header .subtitle {
+            font-size: 12px;
+            color: #d4af37;
+            letter-spacing: 4px;
+            margin-top: 3px;
+        }
+
+        /* Bàn xóc đĩa */
+        .dice-area {
+            background: radial-gradient(ellipse at center, #1a0000, #000);
+            border: 2px solid #d4af37;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+            min-height: 140px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .dice {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(145deg, #fff, #f0f0f0);
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 45px;
+            box-shadow: 
+                0 8px 20px rgba(0, 0, 0, 0.5),
+                inset 0 -3px 0 rgba(0, 0, 0, 0.1);
+            transform: rotateY(0deg) rotateX(0deg);
+            transition: transform 0.1s;
+            user-select: none;
+        }
+
+        .dice.shaking {
+            animation: shake 0.15s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: rotate(-15deg) scale(1.05); }
+            25% { transform: rotate(15deg) scale(0.95); }
+            50% { transform: rotate(-10deg) scale(1.1); }
+            75% { transform: rotate(10deg) scale(0.98); }
+            100% { transform: rotate(-15deg) scale(1.05); }
+        }
+
+        .dice.reveal {
+            animation: reveal 0.5s ease;
+        }
+
+        @keyframes reveal {
+            0% { transform: scale(0.5) rotate(180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* Thông tin tiền */
+        .money-info {
+            display: flex;
+            justify-content: space-around;
+            background: linear-gradient(145deg, #1a1a1a, #000);
+            border: 2px solid #d4af37;
+            border-radius: 15px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .money-info .item {
+            text-align: center;
+        }
+
+        .money-info .label {
+            font-size: 11px;
+            color: #d4af37;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+        }
+
+        .money-info .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .money-info .value.lost {
+            color: #ff4444;
+            text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+        }
+
+        /* Bảng đặt cược */
+        .bet-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .bet-cell {
+            background: linear-gradient(145deg, #fff5e0, #ffe4b5);
+            border-radius: 15px;
+            padding: 12px 5px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            border: 3px solid transparent;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .bet-cell:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .bet-cell:active {
+            transform: translateY(0);
+        }
+
+        .bet-cell.active {
+            border-color: #ff0000;
+            background: linear-gradient(145deg, #ffe066, #ffb300);
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.6);
+        }
+
+        .bet-cell .emoji {
+            font-size: 35px;
+            display: block;
+            line-height: 1;
+        }
+
+        .bet-cell .name {
+            font-size: 12px;
+            font-weight: bold;
+            color: #8b0000;
+            margin-top: 3px;
+            letter-spacing: 1px;
+        }
+
+       ều .bet-cell .bet-amount {
+            position: absolute;
+            top: 3px;
+            right: 5px;
+            background: #ff0000;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+            min-width: 20px khi;
+            animation: popIn 0.3s;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            70%ển { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Chọn mệnh giá */
+        .chip-selector {
+ */
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+                   flex-wrap: wrap;
+        }
+
+        .chip {
+            width: 55px;
+            height: 55px;
+            border-radius .: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            border: 4px dashed rgba(255, 255, 255, 0.7);
+            transition: all 0.2s;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            user-select: none;
+        }
+
+        .chip[data-value="100"] {
+            background: radial-gradient(circle, #4ade80, #166534);
+        }
+
+        .chip[data-value="500"] {
+            background: radial-gradient(circle, #60a5fa, #1e3a8a);
+        }
+
+        .chip[data-value="1000"] {
+            background: radial-gradient(circle, #f87171, #7f1d1d);
+        }
+
+        .chip[data-value="5000"] {
+            background: radial-gradient(circle, #c084fc, #581c87);
+        }
+
+        .chip.active {
+            transform: scale(1.15);
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .chip:hover {
+            transform: scale(1.05);
+        }
+
+        /* Nút đicontrols {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            user-select: none;
+        }
+
+        .btn-roll {
+            background: linear-gradient(145deg, #ffd700, #ff8c00);
+            color: #4a0000;
+            box-shadow: 0 5px 0 #b8860b;
+        }
+
+        .btn-roll:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 #b8860b, 0 10px 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .btn-roll:active:not(:disabled) {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #b8860b;
+        }
+
+        .btn-roll:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(0.5);
+        }
+
+        .btn-clear {
+            flex: 0 0 auto;
+            padding: 15px 20px;
+            background: linear-gradient(145deg, #666, #333);
+            color: white;
+            box-shadow: 0 5px 0 #111;
+        }
+
+        .btn-clear:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 #111;
+        }
+
+        .btn-clear:active:not(:disabled) {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #111;
+        }
+
+        .btn-clear:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Thông báo kết quả */
+        .result-banner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(145deg, #ffd700, #ff8c00);
+            color: #4a0000;
+            padding: 25px 40px;
+            border-radius: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            border: 4px solid white;
+        }
+
+        .result-banner.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .result-banner .amount {
+            font-size: 32px;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .result-banner.lose {
+            background: linear-gradient(145deg, #ff4444, #8b0000);
+            color: white;
+            box-shadow: 0 0 50px rgba(255, 68, 68, 0.8);
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .game-container {
+                padding: 12px;
+                border-radius: 18px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .dice {
+                width: 60px;
+                height: 60px;
+                font-size: 32px;
+            }
+
+            .dice-area {
+                min-height: 110px;
+                padding: 15px;
+                gap: 10px;
+            }
+
+            .bet-cell .emoji {
+                font-size: 28px;
+            }
+
+            .bet-cell .name {
+                font-size: 11px;
+            }
+
+            .chip {
+                width: 48px;
+                height: 48px;
+                font-size: 11px;
+            }
+
+            .btn {
+                padding: 12px;
+                font-size: 14px;
+            }
+
+            .money-info .value {
+                font-size: 17px;
+            }
+
+            .result-banner {
+                padding: 20px 30px;
+                font-size: 20px;
+            }
+
+            .result-banner .amount {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>🎲 BẦU CUA TÔM CÁ 🎲</h1>
+            <div class="subtitle">MAY MẮN CHIẾN THẮNG</div>
+        </div>
+
+        <!-- Khu vực xúc xắc -->
+        <div class="dice-area" id="diceArea">
+            <div class="dice" id=" <dice1">❓</div>
+            <div class="dice" id="dice2">❓</div>
+            <div class="dice" id="dice3">❓</div>
+        </div>
+
+        <!-- Thông tin tiền -->
+        <div class="money-info">
+            <div class="item">
+                <div class="label">💰 SỐ DƯ</div>
+                <div class="value" id="balance">10,000</div>
+            </div>
+            <div class="item">
+                <div class="label">🎯 ĐANGdiv CƯỢC</div>
+                <div class="value" id="currentBet">0</div>
+            </div class>
+        </div>
+
+        <!-- Bảng đặt cược -->
+        <div class="bet-board="" id="betBoard">
+            <div class="bet-cell" data-symbol="bau">
+                <span class="emoji">🎃</span>
+bet                <span class="name">BẦU</span>
+            </div>
+            <div class="bet-cell"-cell data-symbol="cua">
+                <span class="emoji">🦀</span>
+                <span class="name">CUA</span>
+            </div>
+            <div class="bet-cell" data-symbol="tom">
+                <span class="emoji">🦐</span>
+                <span class="name">TÔM</span>
+            </div>
+            <div class="bet-cell" data-symbol="ca">
+                <span class="emoji">🐟</span>
+                <span class="name">CÁ</span>
+            </div>
+           " data-symbol="ga">
+                <span class="emoji">🐓</span>
+                <span class="name">GÀ</span>
+            </div>
+            <div class="bet-cell" data-symbol="nai">
+                <span class="emoji">🦌</span>
+                <span class="name">NAI</span>
+            </div>
+        </div>
+
+        <!-- Chọn mệnh giá chip -->
+        <div class="chip-selector" id="chipSelector">
+            <div class="chip active" data-value="100">100</div>
+            <div class="chip" data-value="500">500</div>
+            <div class="chip" data-value="1000">1K</div>
+            <div class="chip" data-value="5000">5K</div>
+        </div>
+
+        <!-- Nút điều khiển -->
+        <div class="controls">
+            <button class="btn btn-roll" id="rollBtn">🎲 LẮC NGAY</button>
+            <button class="btn btn-clear" id="clearBtn">🗑️</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="result-banner" id="resultBanner"></div>
+
+    <script>
+        // Định nghĩa các linh vật
+        const SYMBOLS = {
+            bau: { emoji: '🎃', name: 'Bầu' },
+            cua: { emoji: '🦀', name: 'Cua' },
+            tom: { emoji: '🦐', name: 'Tôm' },
+            ca:  { emoji: '🐟', name: 'Cá' },
+            ga:  { emoji: '🐓', name: 'Gà' },
+            nai: { emoji: '🦌', name: 'Nai' }
+        };
+
+        const SYMBOL_KEYS = Object.keys(SYMBOLS);
+
+        // Trạng thái game
+        let state = {
+            balance: 10000,
+            bets: {}, // { bau: 500, cua: 1000 }
+            chipValue: 100,
+            isRolling: false
+        };
+
+        // DOM elements
+        const balanceEl = document.getElementById('balance');
+        const currentBetEl = document.getElementById('currentBet');
+        const rollBtn = document.getElementById('rollBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const overlay = document.getElementById('overlay');
+        const resultBanner = document.getElementById('resultBanner');
+        const dice1 = document.getElementById('dice1');
+        const dice2 = document.getElementById('dice2');
+        const dice3 = document.getElementById('dice3');
+        const diceArea = document.getElementById('diceArea');
+
+        // Format số tiền
+        function formatMoney(amount) {
+            return amount.toLocaleString('vi-VN');
+        }
+
+        // Tính tổng cược
+        function getTotalBet() {
+            return Object.values(state.bets).reduce((sum, v) => sum + v, 0);
+        }
+
+        // Cập nhật UI tiền
+        function updateMoneyUI() {
+            balanceEl.textContent = formatMoney(state.balance);
+            currentBetEl.textContent = formatMoney(getTotalBet());
+
+            if (getTotalBet() > state.balance) {
+                currentBetEl.classList.add('lost');
+            } else {
+                currentBetEl.classList.remove('lost');
+            }
+        }
+
+        // Cập nhật UI bảng cược
+        function updateBetBoardUI() {
+            document.querySelectorAll('.bet-cell').forEach(cell => {
+                const symbol = cell.dataset.symbol;
+                const amount = state.bets[symbol] || 0;
+
+                // Xóa badge cũ
+                const oldBadge = cell.querySelector('.bet-amount');
+                if (oldBadge) oldBadge.remove();
+
+                if (amount > 0) {
+                    cell.classList.add('active');
+                    const badge = document.createElement('div');
+                    badge.className = 'bet-amount';
+                    badge.textContent = amount >= 1000 ? (amount / 1000) + 'K' : amount;
+                    cell.appendChild(badge);
+                } else {
+                    cell.classList.remove('active');
+                }
+            });
+
+            // Disable nút nếu vượt số dư
+            const totalBet = getTotalBet();
+            clearBtn.disabled = state.isRolling || totalBet === 0;
+            rollBtn.disabled = state.isRolling;
+        }
+
+        // Đặt cược
+        function placeBet(symbol) {
+            if (state.isRolling) return;
+
+            const totalBet = getTotalBet();
+            if (totalBet + state.chipValue > state.balance) {
+                shakeElement(currentBetEl);
+                return;
+            }
+
+            state.bets[symbol] = (state.bets[symbol] || 0) + state.chipValue;
+            updateMoneyUI();
+            updateBetBoardUI();
+        }
+
+        // Xóa tất cả cược
+        function clearBets() {
+            if (state.isRolling) return;
+            state.bets = {};
+            updateMoneyUI();
+            updateBetBoardUI();
+        }
+
+        // Hiệu ứng rung
+        function shakeElement(el) {
+            el.animate([
+                { transform: 'translateX(0)' },
+                { transform: 'translateX(-8px)' },
+                { transform: 'translateX(8px)' },
+                { transform: 'translateX(-8px)' },
+                { transform: 'translateX(0)' }
+            ], { duration: 300 });
+        }
+
+        // Random linh vật
+        function randomSymbol() {
+            return SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
+        }
+
+        // Lắc xúc xắc
+        async function roll() {
+            if (state.isRolling) return;
+
+            const totalBet = getTotalBet();
+            if (totalBet === 0) {
+                shakeElement(document.getElementById('betBoard'));
+                return;
+            }
+
+            if (totalBet > state.balance) {
+                shakeElement(currentBetEl);
+                return;
+            }
+
+            state.isRolling = true;
+            updateBetBoardUI();
+
+            // Trừ tiền cược
+            state.balance -= totalBet;
+            updateMoneyUI();
+
+            // Reset dice
+            [dice1, dice2, dice3].forEach(d => {
+                d.textContent = '❓';
+                d.classList.remove('reveal');
+                d.classList.add('shaking');
+            });
+
+            // Hiệu ứng lắc
+            await sleep(1500);
+
+            // Kết quả
+            const results = [randomSymbol(), randomSymbol(), randomSymbol()];
+            const diceEls = [dice1, dice2, dice3];
+
+            // Dừng lắc và hiện kết quả lần lượt
+            for (let i = 0; i < 3; i++) {
+                await sleep(300);
+                diceEls[i].classList.remove('shaking');
+                diceEls[i].classList.add('reveal');
+                diceEls[i].textContent = SYMBOLS[results[i]].emoji;
+            }
+
+            await sleep(500);
+
+            // Tính tiền thắng
+            let winAmount = 0;
+            const winDetails = [];
+
+            results.forEach(symbol => {
+                if (state.bets[symbol]) {
+                    const win = state.bets[symbol] * 2;
+                    winAmount += win;
+                }
+            });
+
+            // Cộng tiền thắng
+            state.balance += winAmount;
+
+            // Hiển thị kết quả
+            const netWin = winAmount - totalBet;
+            showResult(netWin, winAmount, totalBet, results);
+
+            // Reset cược
+            state.bets = {};
+            state.isRolling = false;
+            updateMoneyUI();
+            updateBetBoardUI();
+        }
+
+        // Hiển thị kết quả
+        function showResult(netWin, winAmount, totalBet, results) {
+            const resultNames = results.map(r => SYMBOLS[r].emoji + ' ' + SYMBOLS[r].name).join(' | ');
+
+            if (netWin > 0) {
+                resultBanner.className = 'result-banner show';
+                resultBanner.innerHTML = `
+                    🎉 THẮNG LỚN! 🎉
+                    <span style="font-size: 14px; display: block; margin: 8px 0; opacity: 0.9;">
+                        ${resultNames}
+                    </span>
+                    <span class="amount">+${formatMoney(netWin)}</span>
+                `;
+            } else if (netWin < 0) {
+                resultBanner.className = 'result-banner show lose';
+                resultBanner.innerHTML = `
+                    😢 THUA RỒI!
+                    <span style="font-size: 14px; display: block; margin: 8px 0; opacity: 0.9;">
+                        ${resultNames}
+                    </span>
+                    <span class="amount">${formatMoney(netWin)}</span>
+                `;
+            } else {
+                resultBanner.className = 'result-banner show';
+                resultBanner.innerHTML = `
+                    🤝 HÒA VỐN
+                    <span style="font-size: 14px; display: block; margin: 8px 0; opacity: 0.9;">
+                        ${resultNames}
+                    </span>
+                `;
+            }
+
+            overlay.classList.add('show');
+
+            setTimeout(() => {
+                resultBanner.classList.remove('show');
+                overlay.classList.remove('show');
+            }, 2500);
+
+            // Nếu hết tiền
+            if (state.balance < 100) {
+                setTimeout(() => {
+                    if (state.balance < 100) {
+                        if (confirm('Bạn đã hết tiền! Chơi lại từ đầu?')) {
+                            state.balance = 10000;
+                            updateMoneyUI();
+                        }
+                    }
+                }, 2600);
+            }
+        }
+
+        // Utility
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Event listeners
+        document.querySelectorAll('.bet-cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                placeBet(cell.dataset.symbol);
+            });
+        });
+
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                if (state.isRolling) return;
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                state.chipValue = parseInt(chip.dataset.value);
+            });
+        });
+
+        rollBtn.addEventListener('click', roll);
+        clearBtn.addEventListener('click', clearBets);
+
+        // Khởi tạo
+        updateMoneyUI();
+        updateBetBoardUI();
+    </script>
+</body>
+</html>
